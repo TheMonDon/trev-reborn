@@ -4,7 +4,7 @@ Trev is a package for getting random nsfw and memes from reddit.
 
 You can also get custom ones.
 
-For support, join this discord server: [https://discord.gg/PrVRHPh](https://discord.gg/PrVRHPh)
+For support, join this discord server: [https://discord.gg/4fcgKVKk2h](https://discord.gg/4fcgKVKk2h)
 
 ## Usage example
 
@@ -27,8 +27,7 @@ Trev is now modular! More documentation on that later, i need to fix some issues
 
 ## Full list of functions
 
-You can check the full list here: [https://hastebin.com/tohozitavu.cs](https://hastebin.com/tohozitavu.cs)
-It is too long to how here, so i encourage checking it out.
+Currently not available as the hastebin was removed a long time ago.
 
 ## Other methods
 

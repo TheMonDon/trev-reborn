@@ -4,7 +4,9 @@
   "description": "Getting random nsfw images, hentai images and memes from reddit. Fast and tons of features supported.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint --fix **/**.js",
+    "prettier:check": "prettier **/**.{js,json} --check --ignore-unknown",
+    "prettier:fix": "prettier **/**.{js,json} --write --ignore-unknown"
   },
   "repository": {
     "type": "git",
@@ -13,7 +15,7 @@
   "author": "themondon",
   "license": "MIT",
   "dependencies": {
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.12",
     "utf8": "^3.0.0"
   },
   "keywords": [
@@ -36,5 +38,14 @@
     "api",
     "sfw",
     "modular"
-  ]
+  ],
+  "devDependencies": {
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^16.0.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "prettier": "^3.0.0"
+  }
 }
