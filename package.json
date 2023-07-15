@@ -1,6 +1,6 @@
 {
   "name": "trev-reborn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Getting random nsfw images, hentai images and memes from reddit. Fast and tons of features supported.",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "trev-reborn"
+    "url": "https://github.com/TheMonDon/trev-reborn"
   },
   "author": "themondon",
   "license": "MIT",
