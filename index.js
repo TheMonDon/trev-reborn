@@ -45,35 +45,24 @@ function choice(arr) {
   return arr[randint(0, arr.length - 1)];
 }
 
-function gjov(obj, t) {
-  const paths = t.split('.');
-  for (const path of paths) {
+function getValueByPath(obj, t) {
+  const pathSegments = t.split('.');
+  for (const path of pathSegments) {
     obj = obj[path];
   }
   return obj;
 }
 
-function buildpath(t) {
-  const paths = t.split('.');
-  let res = '.';
-  for (const path of paths) {
-    res += path + '.';
+function generatePathString(path) {
+  const pathSegments = path.split('.');
+  let result = '.';
+  for (const segment of pathSegments) {
+    result += segment + '.';
   }
-  return res.slice(0, res.length - 1);
+  return result.slice(0, result.length - 1);
 }
 
-function isArr(obj) {
-  try {
-    // eslint-disable-next-line no-unreachable-loop
-    for (const thing of obj) {
-      return true;
-    }
-  } catch {
-    return false;
-  }
-}
-
-function signPaths(obj, path = '.') {
+function generateObjectPaths(obj, path = '.') {
   for (const key in obj) {
     if (obj[key] && typeof obj[key] === 'object') {
       if (path !== '' && !paths.includes(path)) {
@@ -81,47 +70,44 @@ function signPaths(obj, path = '.') {
           paths.push(path);
         }
       }
-      signPaths(obj[key], path + key + '.');
+      generateObjectPaths(obj[key], path + key + '.');
     }
   }
 }
 
 // beginning of code
 class Trev {
-  constructor(options) {
-    try {
-      this.verbose = options.verbose;
-    } catch {
-      this.verbose = true;
-    }
+  constructor() {
+    this.verbose = false;
     this.loadTrev();
   }
 
   loadTrev() {
-    // or reload
     paths = [];
     varstore = [];
     tableplace = 0;
     this.subreddits = subreddits;
-    signPaths(this.subreddits);
+    generateObjectPaths(this.subreddits);
     for (let i = 0; i < paths.length; i++) {
       paths[i] = redo(paths[i]);
     }
-    // memes category comming soon, you can already see it in subreddits.json but its empty for the moment
+
     if (this.verbose) console.log('[+] Loading/creating functions | trev');
     for (const path of paths) {
-      const part = gjov(this.subreddits, path);
+      const part = getValueByPath(this.subreddits, path);
       for (const key of Object.keys(part)) {
         const curp = path + '.' + key;
-        if (isArr(gjov(this.subreddits, curp))) {
+
+        if (Array.isArray(getValueByPath(this.subreddits, curp))) {
           if (!isSafePath(curp)) {
             throw new Error(
               'UnsafeCategoryName: One of the category names in the subreddits.json file was seen as unsafe.\nMake sure you use a trusted trevlist or the default one to avoid this error.\nRules for making a category name safe: only letters (caps or no caps) and numbers',
             );
           }
-          varstore[tableplace] = gjov(this.subreddits, curp);
+
+          varstore[tableplace] = getValueByPath(this.subreddits, curp);
           eval(`
-            this.subreddits${buildpath(curp)} = async () => {
+            this.subreddits${generatePathString(curp)} = async () => {
               let subreddit = choice(varstore[${tableplace}]);
               let result = await this.getCustomSubreddit(subreddit);
             	return result;
@@ -143,7 +129,7 @@ class Trev {
       link =
         'https://gist.githubusercontent.com/rblxploit/28078547cd8b1a10bbf4d6a9f98f0a0e/raw/3fd6bee40b981369781f9073f6312b905d389412/Trev%2520default%2520subreddits';
     fetch(link)
-      .then((r) => r.json())
+      .then((result) => result.json())
       .then((trevlist) => {
         // save to file
         // recall the constructor
@@ -154,27 +140,32 @@ class Trev {
       });
   }
 
-  async getSubreddit(sr) {
-    const link = `https://www.reddit.com${sr}/random.json`;
-    let r;
-    for (let i = 0; i < 1; i++) {
-      try {
-        r = await fetch(utf8.encode(link));
-        return r.json();
-      } catch (err) {
-        i--;
-      }
+  async getSubreddit(subreddit) {
+    const link = `https://www.reddit.com/r/${subreddit}/random.json`;
+    let result;
+
+    try {
+      result = await fetch(utf8.encode(link));
+      return result.json();
+    } catch (err) {
+      if (this.verbose) console.log('[-] Broken subreddit: ', err);
+      return undefined;
     }
   }
 
-  formatRedditRes(r) {
-    if (r === undefined) return undefined;
-    const data = r[0].data.children[0].data;
+  formatRedditRes(subredditData) {
+    if (subredditData === undefined) return undefined;
+
+    const data = subredditData[0].data.children[0].data;
     if (data.url_overridden_by_dest) {
-      if (this.isImgurUpload(data.url_overridden_by_dest))
+      if (this.isImgurUpload(data.url_overridden_by_dest)) {
         data.url_overridden_by_dest = this.getRawImgur(data.url_overridden_by_dest);
+      } else if (this.isRedGifsLink(data.url_overridden_by_dest)) {
+        data.url_overridden_by_dest = this.redGifsIframe(data.url_overridden_by_dest);
+      }
     }
-    const newdata = {
+
+    const newData = {
       title: data.title,
       author: data.author,
       subreddit: data.subreddit_name_prefixed,
@@ -182,7 +173,7 @@ class Trev {
       media: data.url_overridden_by_dest,
       over_18: data.over_18,
     };
-    return newdata;
+    return newData;
   }
 
   isImgurGallery(url) {
@@ -210,25 +201,66 @@ class Trev {
   }
 
   async getCustomSubreddit(subreddit) {
-    if (!subreddit.startsWith('/r/')) {
-      if (subreddit.startsWith('r/')) subreddit = '/' + subreddit;
-      else subreddit = '/r/' + subreddit;
+    subreddit = subreddit.replace(/^(\/)?(r\/)?/i, '');
+
+    let subredditData = await this.getSubreddit(subreddit);
+    let attempts = 0;
+    while (subredditData[0] === undefined && attempts < 5) {
+      subredditData = await this.getSubreddit(subreddit);
+      attempts++;
     }
-    let r = await this.getSubreddit(subreddit);
-    let tentatives = 0;
-    while (r[0] === undefined && tentatives < 5) {
-      r = await this.getSubreddit(subreddit);
-      tentatives++;
-    }
-    if (tentatives >= 5) {
+    if (attempts >= 5) {
       if (this.verbose) console.log('[-] Broken subreddit: ' + subreddit);
       return undefined;
     }
-    if (!r) return undefined;
-    return this.formatRedditRes(r);
+    return subredditData ? this.formatRedditRes(subredditData) : undefined;
+  }
+
+  isRedGifsLink(url) {
+    if (!url) return false;
+    const urls = [
+      'https://www.redgifs.com',
+      'https://www.gfycat.com',
+      'https://redgifs.com',
+      'https://gfycat.com',
+      'http://v3.redgifs.com',
+    ];
+    for (let i = 0; i < urls.length; i++) {
+      if (url.startsWith(urls[i])) return true;
+    }
+    return false;
+  }
+
+  redGifsIframe(url) {
+    const urls = [
+      'https://www.redgifs.com',
+      'https://www.gfycat.com',
+      'https://redgifs.com',
+      'https://gfycat.com',
+      'http://v3.redgifs.com',
+    ];
+    let urlstart;
+    let name;
+    for (let i = 0; i < urls.length; i++) {
+      if (url.startsWith(urls[i])) {
+        urlstart = urls[i];
+        break;
+      }
+    }
+    if (urlstart.includes('redgifs')) {
+      // redgifs domain, +6 for /watch
+      name = url.slice(urlstart.length + 6);
+    } else {
+      // gfycat domain, leave normal
+      name = url.slice(urlstart.length);
+    }
+    return urlstart + '/ifr' + name;
   }
 
   isGfyLink(url) {
+    console.log(
+      'isGfyLink is deprecated and is replaced with isRedGifsLink. It will be removed in the next major version. This function is also called internally now.',
+    );
     if (!url) return false;
     const urls = [
       'https://www.redgifs.com',
@@ -243,6 +275,9 @@ class Trev {
   }
 
   gfyIframe(url) {
+    console.log(
+      'gfyIframe is deprecated and is replaced with redGifsIframe. It will be removed in the next major version. This function is also called internally now.',
+    );
     const urls = [
       'https://www.redgifs.com',
       'https://www.gfycat.com',
