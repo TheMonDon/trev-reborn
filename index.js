@@ -163,6 +163,8 @@ class Trev {
         data.url_overridden_by_dest = this.getRawImgur(data.url_overridden_by_dest);
       } else if (this.isRedGifsLink(data.url_overridden_by_dest)) {
         data.url_overridden_by_dest = this.redGifsIframe(data.url_overridden_by_dest);
+      } else if (this.isRedditGallery(data.url_overridden_by_dest)) {
+        data.url_overridden_by_dest = this.getRawRedditGallery(data);
       }
     }
 
@@ -178,15 +180,25 @@ class Trev {
     return newData;
   }
 
+  isRedditGallery(url) {
+    const regex = /^https?:\/\/(?:www\.)?reddit\.com\/gallery\//;
+    return regex.test(url);
+  }
+
+  getRawReddit(data) {
+    let url = Object.values(data.media_metadata)[0].s.u;
+    url = url.replace(/preview/, "i").replace(/\?.+$/, "");
+    return url;
+  } 
+
   isImgurGallery(url) {
-    return (
-      url.startsWith('https://www.imgur.com/gallery/') ||
-      url.startsWith('https://imgur.com/gallery/')
-    );
+    const regex = /^https?:\/\/(?:www\.)?imgur\.com\/gallery\//;
+    return regex.test(url);
   }
 
   isImgurMultiUpload(url) {
-    return url.startsWith('https://www.imgur.com/a/') || url.startsWith('https://imgur.com/a/');
+    const regex = /^https?:\/\/(?:www\.)?imgur\.com\/a\//;
+    return regex.test(url);
   }
 
   isImgurUpload(url) {
