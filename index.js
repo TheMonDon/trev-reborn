@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex */
 const fetch = require('node-fetch');
 const subreddits = require('./subreddits.json');
 const fs = require('fs');
@@ -171,6 +172,7 @@ class Trev {
       subreddit: data.subreddit_name_prefixed,
       permalink: 'https://www.reddit.com' + data.permalink,
       media: data.url_overridden_by_dest,
+      text: data.selftext.replace(/([^\x00-\x7F]|&#[0-9]+;)/g, ''),
       over_18: data.over_18,
     };
     return newData;
