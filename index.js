@@ -164,7 +164,7 @@ class Trev {
       } else if (this.isRedGifsLink(data.url_overridden_by_dest)) {
         data.url_overridden_by_dest = this.redGifsIframe(data.url_overridden_by_dest);
       } else if (this.isRedditGallery(data.url_overridden_by_dest)) {
-        data.url_overridden_by_dest = this.getRawRedditGallery(data);
+        data.url_overridden_by_dest = this.getRawReddit(data);
       }
     }
 
