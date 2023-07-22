@@ -163,17 +163,16 @@ class Trev {
         data.url_overridden_by_dest = this.getRawImgur(data.url_overridden_by_dest);
       } else if (this.isRedGifsLink(data.url_overridden_by_dest)) {
         data.url_overridden_by_dest = this.redGifsIframe(data.url_overridden_by_dest);
-      } else if (this.isRedditGallery(data.url_overridden_by_dest)) {
-        data.url_overridden_by_dest = this.getRawReddit(data);
       }
     }
+    const media = this.getRawReddit(data);
 
     const newData = {
       title: data.title,
       author: data.author,
       subreddit: data.subreddit_name_prefixed,
       permalink: 'https://www.reddit.com' + data.permalink,
-      media: data.url_overridden_by_dest,
+      media,
       text: data.selftext.replace(/([^\x00-\x7F]|&#[0-9]+;)/g, ''),
       over_18: data.over_18,
     };
@@ -186,10 +185,13 @@ class Trev {
   }
 
   getRawReddit(data) {
-    let url = Object.values(data.media_metadata)[0].s.u;
-    url = url.replace(/preview/, "i").replace(/\?.+$/, "");
+    let url = data.url_overridden_by_dest;
+    if (this.isRedditGallery(url)) {
+      url = Object.values(data.media_metadata)[0].s.u;
+    }
+    url = url.replace(/preview/, 'i').replace(/\?.+$/, '');
     return url;
-  } 
+  }
 
   isImgurGallery(url) {
     const regex = /^https?:\/\/(?:www\.)?imgur\.com\/gallery\//;
