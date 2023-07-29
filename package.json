@@ -1,6 +1,6 @@
 {
   "name": "trev-reborn",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Getting random text, nsfw images, hentai images and memes from reddit. Fast and tons of features supported.",
   "main": "index.js",
   "scripts": {

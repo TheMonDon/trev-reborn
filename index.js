@@ -186,10 +186,12 @@ class Trev {
 
   getRawReddit(data) {
     let url = data.url_overridden_by_dest;
-    if (this.isRedditGallery(url)) {
-      url = Object.values(data.media_metadata)[0].s.u;
+    if (url) {
+      if (this.isRedditGallery(url)) {
+        url = Object.values(data.media_metadata)[0].s.u;
+      }
+      url = url.replace(/preview/, 'i').replace(/\?.+$/, '');
     }
-    url = url.replace(/preview/, 'i').replace(/\?.+$/, '');
     return url;
   }
 
