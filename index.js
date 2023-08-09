@@ -4,12 +4,10 @@ const subreddits = require('./subreddits.json');
 const fs = require('fs');
 const utf8 = require('utf8');
 
-// useless global vars
 let paths;
 let varstore;
 let tableplace;
 
-// useless functions
 function isSafeCatName(str) {
   for (const c of str) {
     try {
@@ -37,13 +35,12 @@ function redo(str) {
   return str.slice(1, str.length - 1);
 }
 
-function randint(min, max) {
+function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// eslint-disable-next-line no-unused-vars
 function choice(arr) {
-  return arr[randint(0, arr.length - 1)];
+  return arr[randInt(0, arr.length - 1)];
 }
 
 function getValueByPath(obj, t) {
@@ -76,7 +73,6 @@ function generateObjectPaths(obj, path = '.') {
   }
 }
 
-// beginning of code
 class Trev {
   constructor() {
     this.verbose = false;
@@ -131,12 +127,12 @@ class Trev {
         'https://gist.githubusercontent.com/rblxploit/28078547cd8b1a10bbf4d6a9f98f0a0e/raw/3fd6bee40b981369781f9073f6312b905d389412/Trev%2520default%2520subreddits';
     fetch(link)
       .then((result) => result.json())
-      .then((trevlist) => {
+      .then((trevList) => {
         // save to file
         // recall the constructor
         // btw this is sync, not async
         // the reason why its not async is that i want it to be blocking
-        fs.writeFileSync('subreddits.json', JSON.stringify(trevlist, null, 2));
+        fs.writeFileSync('subreddits.json', JSON.stringify(trevList, null, 2));
         this.loadTrev();
       });
   }
@@ -257,22 +253,22 @@ class Trev {
       'https://gfycat.com',
       'http://v3.redgifs.com',
     ];
-    let urlstart;
+    let urlStart;
     let name;
     for (let i = 0; i < urls.length; i++) {
       if (url.startsWith(urls[i])) {
-        urlstart = urls[i];
+        urlStart = urls[i];
         break;
       }
     }
-    if (urlstart.includes('redgifs')) {
+    if (urlStart.includes('redgifs')) {
       // redgifs domain, +6 for /watch
-      name = url.slice(urlstart.length + 6);
+      name = url.slice(urlStart.length + 6);
     } else {
       // gfycat domain, leave normal
-      name = url.slice(urlstart.length);
+      name = url.slice(urlStart.length);
     }
-    return urlstart + '/ifr' + name;
+    return urlStart + '/ifr' + name;
   }
 
   isGfyLink(url) {
@@ -302,22 +298,22 @@ class Trev {
       'https://redgifs.com',
       'https://gfycat.com',
     ];
-    let urlstart;
+    let urlStart;
     let name;
     for (let i = 0; i < urls.length; i++) {
       if (url.startsWith(urls[i])) {
-        urlstart = urls[i];
+        urlStart = urls[i];
         break;
       }
     }
-    if (urlstart.includes('redgifs')) {
+    if (urlStart.includes('redgifs')) {
       // redgifs domain, +6 for /watch
-      name = url.slice(urlstart.length + 6);
+      name = url.slice(urlStart.length + 6);
     } else {
       // gfycat domain, leave normal
-      name = url.slice(urlstart.length);
+      name = url.slice(urlStart.length);
     }
-    return urlstart + '/ifr' + name;
+    return urlStart + '/ifr' + name;
   }
 }
 
