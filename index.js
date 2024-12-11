@@ -124,7 +124,7 @@ class Trev {
   changeTrevList(link) {
     if (link === 'default')
       link =
-        'https://gist.githubusercontent.com/rblxploit/28078547cd8b1a10bbf4d6a9f98f0a0e/raw/3fd6bee40b981369781f9073f6312b905d389412/Trev%2520default%2520subreddits';
+        'https://gist.githubusercontent.com/TheMonDon/ff85efc32f06475d4483513f5ec7cfbc/raw/ec5bf4833f8115b1349cde2cea6304ef1c03240a/subreddits.json';
     fetch(link)
       .then((result) => result.json())
       .then((trevList) => {
@@ -138,7 +138,7 @@ class Trev {
   }
 
   async getSubreddit(subreddit) {
-    const link = `https://www.reddit.com/r/${subreddit}/random.json`;
+    const link = `https://www.reddit.com/r/${subreddit}/new.json?limit=100`;
     let result;
 
     try {
@@ -219,15 +219,29 @@ class Trev {
 
     let subredditData = await this.getSubreddit(subreddit);
     let attempts = 0;
-    while (subredditData[0] === undefined && attempts < 5) {
+
+    // Retry fetching if no valid data is returned
+    while (
+      (!subredditData || !subredditData.data || !subredditData.data.children.length) &&
+      attempts < 5
+    ) {
       subredditData = await this.getSubreddit(subreddit);
       attempts++;
     }
+
     if (attempts >= 5) {
       if (this.verbose) console.log('[-] Broken subreddit: ' + subreddit);
       return undefined;
     }
-    return subredditData ? this.formatRedditRes(subredditData) : undefined;
+
+    // Select a random post from the fetched posts
+    const posts = subredditData.data.children;
+    const randomIndex = Math.floor(Math.random() * posts.length);
+    const randomPost = posts[randomIndex]?.data;
+
+    return randomPost
+      ? this.formatRedditRes([{ data: { children: [{ data: randomPost }] } }])
+      : undefined;
   }
 
   isRedGifsLink(url) {
@@ -252,51 +266,6 @@ class Trev {
       'https://redgifs.com',
       'https://gfycat.com',
       'http://v3.redgifs.com',
-    ];
-    let urlStart;
-    let name;
-    for (let i = 0; i < urls.length; i++) {
-      if (url.startsWith(urls[i])) {
-        urlStart = urls[i];
-        break;
-      }
-    }
-    if (urlStart.includes('redgifs')) {
-      // redgifs domain, +6 for /watch
-      name = url.slice(urlStart.length + 6);
-    } else {
-      // gfycat domain, leave normal
-      name = url.slice(urlStart.length);
-    }
-    return urlStart + '/ifr' + name;
-  }
-
-  isGfyLink(url) {
-    console.log(
-      'isGfyLink is deprecated and is replaced with isRedGifsLink. It will be removed in the next major version. This function is also called internally now.',
-    );
-    if (!url) return false;
-    const urls = [
-      'https://www.redgifs.com',
-      'https://www.gfycat.com',
-      'https://redgifs.com',
-      'https://gfycat.com',
-    ];
-    for (let i = 0; i < urls.length; i++) {
-      if (url.startsWith(urls[i])) return true;
-    }
-    return false;
-  }
-
-  gfyIframe(url) {
-    console.log(
-      'gfyIframe is deprecated and is replaced with redGifsIframe. It will be removed in the next major version. This function is also called internally now.',
-    );
-    const urls = [
-      'https://www.redgifs.com',
-      'https://www.gfycat.com',
-      'https://redgifs.com',
-      'https://gfycat.com',
     ];
     let urlStart;
     let name;
