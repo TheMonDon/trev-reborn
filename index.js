@@ -1,8 +1,13 @@
 /* eslint-disable no-control-regex */
 const fetch = require('node-fetch');
+const { URL } = require('url');
+const Parser = require('rss-parser');
+const { parseDocument, DomUtils } = require('htmlparser2');
 const subreddits = require('./subreddits.json');
 const fs = require('fs');
 const utf8 = require('utf8');
+
+const feedParser = new Parser();
 
 let paths;
 let varstore;
@@ -76,6 +81,7 @@ function generateObjectPaths(obj, path = '.') {
 class Trev {
   constructor() {
     this.verbose = false;
+    this.redditRateLimitUntil = 0;
     this.loadTrev();
   }
 
@@ -138,12 +144,80 @@ class Trev {
   }
 
   async getSubreddit(subreddit) {
-    const link = `https://www.reddit.com/r/${subreddit}/new.json?limit=100`;
-    let result;
+    if (Date.now() < this.redditRateLimitUntil) {
+      if (this.verbose) console.log('[-] Reddit rate limit cooldown is active');
+      return undefined;
+    }
+
+    const link = `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/new/.rss`;
 
     try {
-      result = await fetch(utf8.encode(link));
-      return result.json();
+      const response = await fetch(utf8.encode(link), {
+        headers: {
+          'User-Agent': process.env.TREV_USER_AGENT || 'node:trev-reborn:1.2.0 (public RSS client)',
+        },
+      });
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('retry-after');
+        const retryAfterSeconds = Number(retryAfter);
+        const retryAfterDate = Date.parse(retryAfter);
+        const cooldownMs =
+          retryAfter && Number.isFinite(retryAfterSeconds)
+            ? retryAfterSeconds * 1000
+            : Math.max(0, retryAfterDate - Date.now()) || 60_000;
+        this.redditRateLimitUntil = Date.now() + cooldownMs;
+        throw new Error(
+          `Reddit returned HTTP 429; retry after ${Math.ceil(cooldownMs / 1000)} seconds`,
+        );
+      }
+      if (!response.ok) throw new Error(`Reddit returned HTTP ${response.status}`);
+
+      const feed = await feedParser.parseString(await response.text());
+      const children = [];
+
+      for (const item of feed.items || []) {
+        const document = parseDocument(item.content || '');
+        const links = DomUtils.findAll(
+          (node) => node.name === 'a' && DomUtils.getAttributeValue(node, 'href'),
+          document.children,
+        );
+        const mediaUrl = links
+          .map((node) => DomUtils.getAttributeValue(node, 'href'))
+          .find((url) => {
+            try {
+              const parsedUrl = new URL(url);
+              return (
+                ['http:', 'https:'].includes(parsedUrl.protocol) &&
+                !/(^|\.)reddit\.com$/i.test(parsedUrl.hostname)
+              );
+            } catch {
+              return false;
+            }
+          });
+
+        if (!mediaUrl) continue;
+
+        let permalink;
+        try {
+          permalink = new URL(item.link).pathname;
+        } catch {
+          continue;
+        }
+
+        const author = item.creator || item.author || '';
+        children.push({
+          data: {
+            title: item.title || '',
+            author: typeof author === 'string' ? author.replace(/^\/?u\//, '') : '',
+            subreddit_name_prefixed: `r/${subreddit}`,
+            permalink,
+            url_overridden_by_dest: mediaUrl,
+            selftext: '',
+          },
+        });
+      }
+
+      return { data: { children } };
     } catch (err) {
       if (this.verbose) console.log('[-] Broken subreddit: ', err);
       return undefined;
@@ -225,6 +299,7 @@ class Trev {
       (!subredditData || !subredditData.data || !subredditData.data.children.length) &&
       attempts < 5
     ) {
+      if (Date.now() < this.redditRateLimitUntil) return undefined;
       subredditData = await this.getSubreddit(subreddit);
       attempts++;
     }

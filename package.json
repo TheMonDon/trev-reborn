@@ -15,7 +15,9 @@
   "author": "themondon",
   "license": "MIT",
   "dependencies": {
+    "htmlparser2": "^9.1.0",
     "node-fetch": "^2.6.12",
+    "rss-parser": "^3.13.0",
     "utf8": "^3.0.0"
   },
   "keywords": [
@@ -23,7 +25,6 @@
     "trev-reborn",
     "nsfw",
     "reddit",
-    "reddit api",
     "gifs",
     "subreddit",
     "reddit wrapper",
@@ -37,7 +38,6 @@
     "discord",
     "bot",
     "images",
-    "api",
     "sfw",
     "modular"
   ],
